@@ -7,6 +7,7 @@ from django.db import models
 # 3. Local imports
 
 
+# rename?!
 class UserProfile(models.Model):
     USER_TYPES = (
         ('customer', 'Customer'),

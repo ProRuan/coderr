@@ -7,8 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 # 3. Local imports
-from profile_app.models import Profile, CustomerProfile
-from .serializers import BusinessProfileSerializer, CustomerProfileSerializer, ProfileDetailSerializer, ProfileUpdateSerializer
+from profile_app.models import Profile
+from .serializers import ProfileDetailSerializer, ProfileSerializer, ProfileUpdateSerializer
 from .permissions import IsProfileOwner
 
 
@@ -73,7 +73,10 @@ class ProfileViewSet(viewsets.GenericViewSet):
 
 
 class BusinessProfileListView(ListAPIView):
-    serializer_class = BusinessProfileSerializer
+    """
+    Lists all business profiles.
+    """
+    serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -81,8 +84,11 @@ class BusinessProfileListView(ListAPIView):
 
 
 class CustomerProfileListView(ListAPIView):
-    serializer_class = CustomerProfileSerializer
+    """
+    Lists all customer profiles.
+    """
+    serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return CustomerProfile.objects.filter(type='customer')
+        return Profile.objects.filter(type='customer')

@@ -7,6 +7,7 @@ from rest_framework.routers import DefaultRouter
 # 3. Local imports
 from .views import BusinessProfileListView, CustomerProfileListView, ProfileViewSet
 
+# check this!!!
 router = DefaultRouter()
 router.register(r'profile', ProfileViewSet, basename='profile')
 

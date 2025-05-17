@@ -4,7 +4,7 @@
 from rest_framework import serializers
 
 # 3. Local imports
-from profile_app.models import Profile, CustomerProfile
+from profile_app.models import Profile
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
@@ -75,20 +75,15 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 #         return instance
 
 
-class BusinessProfileSerializer(serializers.ModelSerializer):
+class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for both customer and business profiles.
+    Fields may be conditionally rendered in the frontend.
+    """
     class Meta:
         model = Profile
         fields = [
             'user', 'username', 'first_name', 'last_name',
             'file', 'location', 'tel', 'description',
-            'working_hours', 'type'
-        ]
-
-
-class CustomerProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomerProfile
-        fields = [
-            'user', 'username', 'first_name', 'last_name',
-            'file', 'uploaded_at', 'type'
+            'working_hours', 'type', 'uploaded_at'
         ]
