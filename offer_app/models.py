@@ -23,11 +23,11 @@ class OfferDetail(models.Model):
     offer = models.ForeignKey(
         Offer, on_delete=models.CASCADE, related_name="details")
     title = models.CharField(max_length=255)
-    revisions = models.IntegerField()
-    delivery_time_in_days = models.IntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    features = models.JSONField()
-    offer_type = models.CharField(max_length=50)
+    revisions = models.IntegerField(default=0)
+    delivery_time_in_days = models.IntegerField(default=0)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    features = models.JSONField(default=None)
+    offer_type = models.CharField(max_length=50, default=None)  # None or ''?
 
 
 # # 1. Standard libraries

@@ -10,12 +10,23 @@ from django.contrib.auth.models import User
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+
     class Meta:
         model = OfferDetail
         fields = [
             'id', 'title', 'revisions', 'delivery_time_in_days',
             'price', 'features', 'offer_type'
         ]
+
+
+# class OfferDetailSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = OfferDetail
+#         fields = [
+#             'id', 'title', 'revisions', 'delivery_time_in_days',
+#             'price', 'features', 'offer_type'
+#         ]
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
@@ -68,6 +79,33 @@ class OfferCreateSerializer(serializers.ModelSerializer):
         for detail in details_data:
             OfferDetail.objects.create(offer=offer, **detail)
         return offer
+
+
+class OfferPatchSerializer(serializers.ModelSerializer):
+    """Used only for PATCH (partial update of Offer)."""
+
+    details = OfferDetailSerializer(many=True, required=False)
+
+    class Meta:
+        model = Offer
+        fields = ['title', 'image', 'description', 'details']
+
+    def update(self, instance, validated_data):
+        """Update offer fields and nested offer details."""
+        details_data = validated_data.pop('details', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if details_data:
+            for detail_data in details_data:
+                detail_id = detail_data.get('id')
+                if detail_id:
+                    detail = instance.details.get(id=detail_id)
+                    for attr, value in detail_data.items():
+                        setattr(detail, attr, value)
+                    detail.save()
+        return instance
 
 
 # # 1. Standard libraries
