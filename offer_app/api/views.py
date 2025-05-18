@@ -1,0 +1,104 @@
+# 1. Standard libraries
+# none
+
+# 2. Third-party suppliers
+from rest_framework import status, generics
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+
+# 3. Local imports
+from offer_app.models import Offer
+from .serializers import OfferListSerializer, OfferCreateSerializer
+
+
+class OfferPagination(PageNumberPagination):
+    page_size = 10
+
+
+class OfferListCreateAPIView(generics.GenericAPIView):
+    queryset = Offer.objects.all().prefetch_related('details', 'user')
+    permission_classes = [AllowAny]
+    pagination_class = OfferPagination
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return OfferCreateSerializer
+        return OfferListSerializer
+
+    def get(self, request):
+        """List offers with pagination, details, min_price, and min_delivery_time."""
+        page = self.paginate_queryset(self.get_queryset())
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    def post(self, request):
+        """Create offer with at least 3 details. Requires authenticated business user."""
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication required."}, status=401)
+        if not hasattr(request.user, 'profile') or request.user.profile.type != 'business':
+            return Response({"detail": "Business profile required."}, status=403)
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            offer = serializer.save()
+            response = OfferCreateSerializer(offer).data
+            return Response(response, status=201)
+        return Response(serializer.errors, status=400)
+
+
+# # 1. Standard libraries
+
+# # 2. Third-party suppliers
+# from rest_framework import status, generics
+# from rest_framework.response import Response
+# from rest_framework.permissions import AllowAny, IsAuthenticated
+# from django.db.models import Q
+
+# # 3. Local imports
+# from offer_app.models import Offer
+# from .serializers import OfferSerializer
+
+
+# class OfferListCreateAPIView(generics.ListCreateAPIView):
+#     serializer_class = OfferSerializer
+#     permission_classes = [AllowAny]
+
+#     def get_queryset(self):
+#         queryset = Offer.objects.all()
+
+#         # Filtering
+#         creator_id = self.request.query_params.get('creator_id')
+#         min_price = self.request.query_params.get('min_price')
+#         max_delivery = self.request.query_params.get('max_delivery_time')
+#         search = self.request.query_params.get('search')
+#         ordering = self.request.query_params.get('ordering')
+
+#         if creator_id:
+#             queryset = queryset.filter(user_id=creator_id)
+#         if min_price:
+#             queryset = [
+#                 o for o in queryset if o.min_price and o.min_price >= float(min_price)]
+#         if max_delivery:
+#             queryset = [
+#                 o for o in queryset if o.min_delivery_time and o.min_delivery_time <= int(max_delivery)]
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(title__icontains=search) | Q(description__icontains=search))
+#         if ordering in ['updated_at', 'min_price']:
+#             queryset = sorted(queryset, key=lambda x: getattr(x, ordering))
+
+#         return queryset
+
+#     def post(self, request, *args, **kwargs):
+#         # Only business users allowed
+#         if not request.user.is_authenticated:
+#             return Response({"detail": "Authentication required."}, status=401)
+#         if getattr(request.user, 'userprofile', None) and request.user.userprofile.type != 'business':
+#             return Response({"detail": "Only business users can post offers."}, status=403)
+
+#         serializer = self.get_serializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save(user=request.user)
+#             return Response(serializer.data, status=201)
+#         return Response(serializer.errors, status=400)
