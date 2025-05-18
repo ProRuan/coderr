@@ -2,7 +2,7 @@
 
 # 2. Third-party suppliers
 from rest_framework import status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
@@ -10,7 +10,8 @@ from rest_framework.permissions import IsAuthenticated
 from order_app.models import Order
 from offer_app.models import OfferDetail
 # from offers.models import OfferDetail
-from .serializers import OrderSerializer
+from .permissions import IsBusinessUser, IsStaffOrReadOnly
+from .serializers import OrderSerializer, OrderStatusSerializer
 
 
 class OrderListCreateView(GenericAPIView):
@@ -42,7 +43,8 @@ class OrderListCreateView(GenericAPIView):
             return Response({"error": "Permission denied."}, status=403)
 
         try:
-            detail = OfferDetail.objects.select_related("offer").get(id=detail_id)
+            detail = OfferDetail.objects.select_related(
+                "offer").get(id=detail_id)
         except OfferDetail.DoesNotExist:
             return Response(status=404)
 
@@ -59,3 +61,48 @@ class OrderListCreateView(GenericAPIView):
         serializer = self.serializer_class(order)
         return Response(serializer.data, status=201)
 
+
+class OrderDetailView(RetrieveUpdateDestroyAPIView):
+    """
+    GET /api/orders/{id}/
+    PATCH (status) by business users
+    DELETE by staff only
+    """
+    queryset = Order.objects.all()
+    permission_classes = [IsAuthenticated, IsStaffOrReadOnly]
+    serializer_class = OrderSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [IsAuthenticated(), IsBusinessUser()]
+        return super().get_permissions()
+
+    def get_serializer_class(self):
+        if self.request.method == 'PATCH':
+            return OrderStatusSerializer
+        return OrderSerializer
+
+    def patch(self, request, *args, **kwargs):
+        """Partial update: only status field."""
+        try:
+            order = self.get_object()
+        except Order.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        self.check_object_permissions(request, order)
+        serializer = self.get_serializer(
+            order, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            full = OrderSerializer(order)
+            return Response(full.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        """Delete only for staff users."""
+        try:
+            order = self.get_object()
+        except Order.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        self.check_permissions(request)
+        order.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

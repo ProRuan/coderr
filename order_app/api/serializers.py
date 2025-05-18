@@ -18,3 +18,15 @@ class OrderSerializer(serializers.ModelSerializer):
             'features', 'offer_type', 'status',
             'created_at', 'updated_at'
         ]
+
+
+class OrderStatusSerializer(serializers.ModelSerializer):
+    """Serializer for updating only the order status."""
+    class Meta:
+        model = Order
+        fields = ['status']
+
+    def validate_status(self, value):
+        if value not in ('in_progress', 'completed', 'cancelled'):
+            raise serializers.ValidationError("Invalid status.")
+        return value
