@@ -19,6 +19,7 @@ from django.urls import include, path
 
 from offer_app.api.views import OfferDetailRetrieveAPIView
 
+# think about urls here!!!
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('auth_app.api.urls')),
@@ -26,4 +27,5 @@ urlpatterns = [
     path('api/profiles/', include('profile_app.api.urls')),
     path('api/offers/', include('offer_app.api.urls')),
     path('api/offerdetails/<int:pk>/', OfferDetailRetrieveAPIView.as_view()),
+    path('api/orders/', include('order_app.api.urls')),
 ]
