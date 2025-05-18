@@ -1,17 +1,19 @@
 # 1. Standard libraries
 
 # 2. Third-party suppliers
+from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.generics import GenericAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 # 3. Local imports (models)
 from order_app.models import Order
 from offer_app.models import OfferDetail
 # from offers.models import OfferDetail
 from .permissions import IsBusinessUser, IsStaffOrReadOnly
-from .serializers import OrderSerializer, OrderStatusSerializer
+from .serializers import CompletedOrderCountSerializer, OrderCountSerializer, OrderSerializer, OrderStatusSerializer
 
 
 class OrderListCreateView(GenericAPIView):
@@ -106,3 +108,54 @@ class OrderDetailView(RetrieveUpdateDestroyAPIView):
         self.check_permissions(request)
         order.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class OrderCountView(APIView):
+    """
+    GET /api/order-count/{business_user_id}/
+    Returns the number of 'in_progress' orders for the specified business user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, business_user_id):
+        # Verify business user exists
+        try:
+            User.objects.get(id=business_user_id)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        # Count open orders
+        count = Order.objects.filter(
+            business_user_id=business_user_id,
+            status='in_progress'
+        ).count()
+
+        # Serialize and return
+        serializer = OrderCountSerializer({'order_count': count})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CompletedOrderCountView(APIView):
+    """
+    GET /api/completed-order-count/{business_user_id}/
+    Returns the number of 'completed' orders for the specified business user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, business_user_id):
+        # Ensure the business user exists
+        try:
+            User.objects.get(id=business_user_id)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        # Count completed orders
+        count = Order.objects.filter(
+            business_user_id=business_user_id,
+            status='completed'
+        ).count()
+
+        # Serialize and return
+        serializer = CompletedOrderCountSerializer(
+            {'completed_order_count': count})
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -30,3 +30,13 @@ class OrderStatusSerializer(serializers.ModelSerializer):
         if value not in ('in_progress', 'completed', 'cancelled'):
             raise serializers.ValidationError("Invalid status.")
         return value
+
+
+class OrderCountSerializer(serializers.Serializer):
+    """Serializer for returning the count of open orders."""
+    order_count = serializers.IntegerField(default=0)
+
+
+class CompletedOrderCountSerializer(serializers.Serializer):
+    """Serializer for returning the count of completed orders."""
+    completed_order_count = serializers.IntegerField()

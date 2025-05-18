@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from offer_app.api.views import OfferDetailRetrieveAPIView
+from order_app.api.views import CompletedOrderCountView, OrderCountView
 
 # think about urls here!!!
 urlpatterns = [
@@ -28,4 +29,14 @@ urlpatterns = [
     path('api/offers/', include('offer_app.api.urls')),
     path('api/offerdetails/<int:pk>/', OfferDetailRetrieveAPIView.as_view()),
     path('api/orders/', include('order_app.api.urls')),
+    path(
+        'api/order-count/<int:business_user_id>/',
+        OrderCountView.as_view(),
+        name='order-count'
+    ),
+    path(
+        'api/completed-order-count/<int:business_user_id>/',
+        CompletedOrderCountView.as_view(),
+        name='completed-order-count'
+    ),
 ]
