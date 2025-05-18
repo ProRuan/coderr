@@ -17,10 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from offer_app.api.views import OfferDetailRetrieveAPIView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('auth_app.api.urls')),
     path('api/profile/', include('profile_app.api.urls')),
     path('api/profiles/', include('profile_app.api.urls')),
     path('api/offers/', include('offer_app.api.urls')),
+    path('api/offerdetails/<int:pk>/', OfferDetailRetrieveAPIView.as_view()),
 ]

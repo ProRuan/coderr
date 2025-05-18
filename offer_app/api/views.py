@@ -3,13 +3,13 @@
 
 # 2. Third-party suppliers
 from rest_framework import status, generics
-from rest_framework.generics import RetrieveUpdateDestroyAPIView
+from rest_framework.generics import RetrieveAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 # 3. Local imports
-from offer_app.models import Offer
+from offer_app.models import Offer, OfferDetail
 from .permissions import IsOwnerOrReadOnly
 from .serializers import OfferDetailSerializer, OfferPatchSerializer, OfferListSerializer, OfferCreateSerializer
 
@@ -92,6 +92,27 @@ class OfferDetailView(RetrieveUpdateDestroyAPIView):
         self.check_object_permissions(request, offer)
         offer.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class OfferDetailRetrieveAPIView(RetrieveAPIView):
+    """
+    Returns a specific offer detail by ID.
+    No authentication or permissions required.
+    """
+    queryset = OfferDetail.objects.all()
+    serializer_class = OfferDetailSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            detail = self.get_object()
+        except OfferDetail.DoesNotExist:
+            return Response(
+                {"detail": "Offer detail not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = self.get_serializer(detail)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # # 1. Standard libraries
