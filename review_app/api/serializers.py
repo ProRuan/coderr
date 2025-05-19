@@ -23,3 +23,26 @@ class ReviewSerializer(serializers.ModelSerializer):
         # Set reviewer from request user
         validated_data['reviewer'] = self.context['request'].user
         return super().create(validated_data)
+
+
+# class ReviewSerializer(serializers.ModelSerializer):
+#     """Full review representation."""
+#     class Meta:
+#         model = Review
+#         fields = [
+#             'id', 'business_user', 'reviewer',
+#             'rating', 'description',
+#             'created_at', 'updated_at',
+#         ]
+
+
+class ReviewUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for PATCH: only rating & description."""
+    class Meta:
+        model = Review
+        fields = ['rating', 'description']
+
+    def validate_rating(self, value):
+        if not (1 <= value <= 5):
+            raise serializers.ValidationError("Rating must be 1–5.")
+        return value

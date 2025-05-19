@@ -17,3 +17,12 @@ class IsCustomer(BasePermission):
                 request.user.profile.type == 'customer'
             )
         return True
+
+
+class IsReviewer(BasePermission):
+    """
+    Allows only the creator (reviewer) of a review to update or delete it.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return obj.reviewer == request.user
