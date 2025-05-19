@@ -40,4 +40,5 @@ urlpatterns = [
         name='completed-order-count'
     ),
     path('api/reviews/', include('review_app.api.urls')),
+    path('api/base-info/', include('base_info_app.api.urls')),
 ]
