@@ -5,58 +5,61 @@ from rest_framework import viewsets, status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 # 3. Local imports
-from profile_app.models import Profile
-from .serializers import ProfileDetailSerializer, ProfileSerializer, ProfileUpdateSerializer
+from auth_app.models import CustomUser
+# from profile_app.models import Profile
+from .serializers import BusinessProfileDetailSerializer, BusinessProfileSerializer, CustomerProfileDetailSerializer, CustomerProfileSerializer, ProfileDetailSerializer, ProfileUpdateSerializer
 from .permissions import IsProfileOwner
 
 
-class ProfileViewSet(viewsets.GenericViewSet):
-    """
-    Handles GET and PATCH for /api/profile/{pk}/
-    """
-    queryset = Profile.objects.select_related('user').all()
+class ProfileDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def get_permissions(self):
-        if self.action == 'partial_update':
-            return [IsAuthenticated(), IsProfileOwner()]
-        return [IsAuthenticated()]
-
-    def get_serializer_class(self):
-        if self.action == 'partial_update':
-            return ProfileUpdateSerializer
-        return ProfileDetailSerializer
-
-    def retrieve(self, request, pk=None):
+    def get_object(self, pk):
         try:
-            profile = self.get_object()
-        except Profile.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(profile)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            return CustomUser.objects.get(pk=pk)
+        except CustomUser.DoesNotExist:
+            return None
 
-    def partial_update(self, request, pk=None):
-        try:
-            profile = self.get_object()
-        except Profile.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        self.check_object_permissions(request, profile)
-        serializer = self.get_serializer(
-            profile, data=request.data, partial=True)
+    def get_serializer_class(self, user):
+        """
+        Selects serializer based on user type.
+        """
+        if user.type == 'business':
+            return BusinessProfileDetailSerializer
+        return CustomerProfileDetailSerializer
+
+    def get(self, request, pk):
+        user = self.get_object(pk)
+        if not user:
+            return Response({'detail': 'Profile not found.'}, status=404)
+
+        serializer_class = self.get_serializer_class(user)
+        serializer = serializer_class(user)
+        return Response(serializer.data, status=200)
+
+    def patch(self, request, pk):
+        user = self.get_object(pk)
+        if not user:
+            return Response({'detail': 'Profile not found.'}, status=404)
+        if request.user.pk != user.pk:
+            return Response({'detail': 'Forbidden.'}, status=403)
+        serializer_class = self.get_serializer_class(user)
+        serializer = serializer_class(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            detail_serializer = ProfileDetailSerializer(profile)
-            return Response(detail_serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
 
 
-# class ProfileDetailView(RetrieveAPIView):
-#     serializer_class = ProfileDetailSerializer
-#     permission_classes = [IsAuthenticated]
+class ProfileDetailView(RetrieveAPIView):
+    serializer_class = ProfileDetailSerializer
+    permission_classes = [IsAuthenticated]
 
-#     def get_queryset(self):
-#         return Profile.objects.select_related('user').all()
+    def get_queryset(self):
+        return CustomUser.objects.all()
 
 
 # class ProfileUpdateView(UpdateAPIView):
@@ -76,19 +79,19 @@ class BusinessProfileListView(ListAPIView):
     """
     Lists all business profiles.
     """
-    serializer_class = ProfileSerializer
+    serializer_class = BusinessProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Profile.objects.filter(type='business')
+        return CustomUser.objects.filter(type='business')
 
 
 class CustomerProfileListView(ListAPIView):
     """
     Lists all customer profiles.
     """
-    serializer_class = ProfileSerializer
+    serializer_class = CustomerProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Profile.objects.filter(type='customer')
+        return CustomUser.objects.filter(type='customer')

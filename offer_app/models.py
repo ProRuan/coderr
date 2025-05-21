@@ -3,15 +3,16 @@ from datetime import timedelta
 
 # 2. Third-party suppliers
 from django.db import models
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 
 # 3. Local imports
+from auth_app.models import CustomUser
 # none needed here
 
 
 class Offer(models.Model):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="offers")
+        CustomUser, on_delete=models.CASCADE, related_name="offers")
     title = models.CharField(max_length=255)
     image = models.ImageField(upload_to='offers/', null=True, blank=True)
     description = models.TextField()

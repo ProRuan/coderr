@@ -5,14 +5,15 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 # 3. Local imports
-from .views import BusinessProfileListView, CustomerProfileListView, ProfileViewSet
+from .views import BusinessProfileListView, CustomerProfileListView, ProfileDetailAPIView
 
 # check this!!!
-router = DefaultRouter()
-router.register(r'profile', ProfileViewSet, basename='profile')
+# router = DefaultRouter()
+# router.register(r'profile', ProfileViewSet, basename='profile')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('<int:pk>/', ProfileDetailAPIView.as_view()),
+    #     path('', include(router.urls)),
     path('business/', BusinessProfileListView.as_view(),
          name='business-profiles'),
     path('customer/', CustomerProfileListView.as_view(),

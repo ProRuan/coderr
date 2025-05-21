@@ -4,7 +4,8 @@
 from rest_framework import serializers
 
 # 3. Local imports
-from profile_app.models import Profile
+from auth_app.models import CustomUser
+# from profile_app.models import Profile
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
@@ -13,7 +14,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
     type = serializers.CharField(source='user.type', read_only=True)
 
     class Meta:
-        model = Profile
+        model = CustomUser
         fields = [
             'user', 'username', 'first_name', 'last_name', 'file',
             'location', 'tel', 'description', 'working_hours',
@@ -25,7 +26,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', required=False)
 
     class Meta:
-        model = Profile
+        model = CustomUser
         fields = [
             'first_name', 'last_name', 'location',
             'tel', 'description', 'working_hours', 'email'
@@ -75,15 +76,53 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 #         return instance
 
 
-class ProfileSerializer(serializers.ModelSerializer):
+class BusinessProfileSerializer(serializers.ModelSerializer):
     """
-    Serializer for both customer and business profiles.
-    Fields may be conditionally rendered in the frontend.
+    Serializer for business user profile data.
     """
     class Meta:
-        model = Profile
+        model = CustomUser
         fields = [
-            'user', 'username', 'first_name', 'last_name',
-            'file', 'location', 'tel', 'description',
-            'working_hours', 'type', 'uploaded_at'
+            "id", "username", "first_name", "last_name", "file",
+            "location", "tel", "description", "working_hours", "type"
+        ]
+        read_only_fields = ['id', 'username', 'file', 'type']
+
+
+class BusinessProfileDetailSerializer(BusinessProfileSerializer):
+    """
+    Serializer for business user profile data.
+    """
+    class Meta(BusinessProfileSerializer.Meta):
+        fields = BusinessProfileSerializer.Meta.fields + [
+            "email", "created_at"
+        ]
+        read_only_fields = BusinessProfileSerializer.Meta.read_only_fields + [
+            'email', 'created_at'
+        ]
+
+
+class CustomerProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for customer user profile data.
+    """
+    class Meta:
+        model = CustomUser
+        fields = [
+            "id", "username", "first_name", "last_name",
+            "file", "uploaded_at", "type"
+        ]
+        read_only_fields = ['id', 'username', 'file', 'type']
+
+
+class CustomerProfileDetailSerializer(CustomerProfileSerializer):
+    """
+    Serializer for customer user profile data.
+    """
+    class Meta(CustomerProfileSerializer.Meta):
+        fields = CustomerProfileSerializer.Meta.fields + [
+            "created_at"
+        ]
+        read_only_fields = CustomerProfileSerializer.Meta.read_only_fields + [
+            'created_at'
         ]

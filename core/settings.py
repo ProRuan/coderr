@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'base_info_app',
 ]
 
+AUTH_USER_MODEL = "auth_app.CustomUser"
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',

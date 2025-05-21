@@ -6,7 +6,8 @@ from rest_framework import serializers
 
 # 3. Local imports
 from offer_app.models import Offer, OfferDetail
-from django.contrib.auth.models import User
+from auth_app.models import CustomUser
+# from django.contrib.auth.models import User
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):
@@ -31,7 +32,7 @@ class OfferDetailSerializer(serializers.ModelSerializer):
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = CustomUser
         fields = ['first_name', 'last_name', 'username']
 
 

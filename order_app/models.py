@@ -3,17 +3,18 @@ from datetime import timedelta
 
 # 2. Third-party suppliers
 from django.db import models
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 
 # 3. Local imports
+from auth_app.models import CustomUser
 from offer_app.models import OfferDetail
 
 
 class Order(models.Model):
     customer_user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="orders_as_customer")
+        CustomUser, on_delete=models.CASCADE, related_name="orders_as_customer")
     business_user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="orders_as_business")
+        CustomUser, on_delete=models.CASCADE, related_name="orders_as_business")
     title = models.CharField(max_length=255)
     revisions = models.IntegerField(default=0)
     delivery_time_in_days = models.IntegerField(default=0)

@@ -7,7 +7,7 @@ from rest_framework import status
 from django.db.models import Avg
 
 # 3. Local imports
-from auth_app.models import UserProfile
+from auth_app.models import CustomUser
 from offer_app.models import Offer
 from review_app.models import Review  # adjust import to your app name
 from .serializers import BaseInfoSerializer
@@ -27,7 +27,7 @@ class BaseInfoView(APIView):
         avg = Review.objects.aggregate(avg=Avg('rating'))['avg'] or 0.0
         avg = round(avg, 1)
         # Number of business users
-        biz_count = UserProfile.objects.filter(type='business').count()
+        biz_count = CustomUser.objects.filter(type='business').count()
         # Total number of offers
         offer_count = Offer.objects.count()
 

@@ -2,17 +2,18 @@
 
 # 2. Third-party suppliers
 from django.db import models
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 
 # 3. Local imports
+from auth_app.models import CustomUser
 
 
 class Review(models.Model):
     business_user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="reviews_received"
+        CustomUser, on_delete=models.CASCADE, related_name="reviews_received"
     )
     reviewer = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="reviews_written"
+        CustomUser, on_delete=models.CASCADE, related_name="reviews_written"
     )
     rating = models.IntegerField()
     description = models.TextField()
