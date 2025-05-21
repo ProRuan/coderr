@@ -1,6 +1,14 @@
 from django.urls import path
-from .views import BaseInfoView
+from .views import BaseInfoAPIView
 
 urlpatterns = [
-    path('', BaseInfoView.as_view(), name='base-info'),
+    path('', BaseInfoAPIView.as_view(), name='base-info'),
 ]
+
+
+# from django.urls import path
+# from .views import BaseInfoView
+
+# urlpatterns = [
+#     path('', BaseInfoView.as_view(), name='base-info'),
+# ]

@@ -7,7 +7,9 @@ from rest_framework import serializers
 
 
 class BaseInfoSerializer(serializers.Serializer):
-    """Serializer for platform basic statistics."""
+    """
+    Serializer for platform basic statistics.
+    """
     valuation_count = serializers.IntegerField()
     average_rating = serializers.FloatField()
     business_user_count = serializers.IntegerField()
