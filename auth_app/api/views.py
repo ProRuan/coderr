@@ -17,6 +17,7 @@ class RegistrationView(CreateAPIView):
     POST: Register a new user (customer or business).
     """
     serializer_class = RegistrationSerializer
+    permission_classes = []
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
