@@ -23,17 +23,17 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'reviewer', 'created_at', 'updated_at']
 
 
-class ReviewSerializer(serializers.ModelSerializer):
-    """Full representation of a review."""
-    class Meta:
-        model = Review
-        fields = [
-            'id', 'business_user', 'reviewer',
-            'rating', 'description',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'business_user',
-                            'reviewer', 'created_at', 'updated_at']
+# class ReviewSerializer(serializers.ModelSerializer):
+#     """Full representation of a review."""
+#     class Meta:
+#         model = Review
+#         fields = [
+#             'id', 'business_user', 'reviewer',
+#             'rating', 'description',
+#             'created_at', 'updated_at'
+#         ]
+#         read_only_fields = ['id', 'business_user',
+#                             'reviewer', 'created_at', 'updated_at']
 
 
 class ReviewUpdateSerializer(serializers.ModelSerializer):

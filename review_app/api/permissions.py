@@ -18,6 +18,18 @@ class IsCustomerProfile(BasePermission):
         return True
 
 
+# class IsCustomerProfile(BasePermission):
+#     """
+#     Allows POST only if user.type == 'customer'.
+#     """
+
+#     def has_permission(self, request, view):
+#         if request.method == 'POST':
+#             u = request.user
+#             return bool(u and u.is_authenticated and u.type == 'customer')
+#         return True
+
+
 class IsReviewer(BasePermission):
     """
     Allows read for any authenticated user; only the creator may edit/delete.

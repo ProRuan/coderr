@@ -14,26 +14,56 @@ from review_app.api.permissions import IsCustomerProfile, IsReviewer
 
 class ReviewListCreateAPIView(ListCreateAPIView):
     """
-    GET: list all reviews (authenticated).
-    POST: create review for business_user (customers only, one per pair).
+    GET: list all reviews (authenticated users only).
+    POST: create a review (customers only, one per business user).
     """
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated, IsCustomerProfile]
 
     def perform_create(self, serializer):
-        business = serializer.validated_data['business_user']
+        data = serializer.validated_data
+        business = data.get('business_user')
+        if business is None:
+            raise serializers.ValidationError({
+                'business_user': 'This field is required.'
+            })
         reviewer = self.request.user
         if Review.objects.filter(business_user=business, reviewer=reviewer).exists():
             raise serializers.ValidationError(
-                "Already reviewed this business.")
+                'You have already reviewed this business user.'
+            )
         serializer.save(reviewer=reviewer)
 
     def create(self, request, *args, **kwargs):
         try:
             return super().create(request, *args, **kwargs)
-        except serializers.ValidationError as e:
-            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as exc:
+            return Response(exc.detail, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class ReviewListCreateAPIView(ListCreateAPIView):
+#     """
+#     GET: list all reviews (authenticated).
+#     POST: create review for business_user (customers only, one per pair).
+#     """
+#     queryset = Review.objects.all()
+#     serializer_class = ReviewSerializer
+#     permission_classes = [IsAuthenticated, IsCustomerProfile]
+
+#     def perform_create(self, serializer):
+#         business = serializer.validated_data['business_user']
+#         reviewer = self.request.user
+#         if Review.objects.filter(business_user=business, reviewer=reviewer).exists():
+#             raise serializers.ValidationError(
+#                 "Already reviewed this business.")
+#         serializer.save(reviewer=reviewer)
+
+#     def create(self, request, *args, **kwargs):
+#         try:
+#             return super().create(request, *args, **kwargs)
+#         except serializers.ValidationError as e:
+#             return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ReviewDetailAPIView(RetrieveUpdateDestroyAPIView):
