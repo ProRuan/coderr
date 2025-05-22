@@ -98,7 +98,7 @@ class BusinessProfileDetailSerializer(BusinessProfileSerializer):
             "email", "created_at"
         ]
         read_only_fields = BusinessProfileSerializer.Meta.read_only_fields + [
-            'email', 'created_at'
+            'created_at'
         ]
 
 

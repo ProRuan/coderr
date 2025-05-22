@@ -24,5 +24,5 @@ class CustomUser(AbstractUser):
     tel = models.CharField(max_length=20, blank=True)
     description = models.TextField(blank=True)
     working_hours = models.CharField(max_length=100, blank=True)
-    uploaded_at = models.DateTimeField(auto_now=True)  # auto_now_add=True?
-    created_at = models.DateTimeField(auto_now=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)  # auto_now_add=True?
+    created_at = models.DateTimeField(auto_now_add=True)  # auto_now_add=True?
