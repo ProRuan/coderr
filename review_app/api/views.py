@@ -11,6 +11,7 @@ from review_app.models import Review
 from review_app.api.serializers import ReviewSerializer, ReviewUpdateSerializer
 from review_app.api.permissions import IsCustomerProfile, IsReviewer
 from review_app.api.throttling import ReviewThrottle
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class ReviewListCreateAPIView(ListCreateAPIView):
@@ -22,6 +23,8 @@ class ReviewListCreateAPIView(ListCreateAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated, IsCustomerProfile]
     throttle_classes = [ReviewThrottle]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['business_user_id', 'reviewer_id']
 
     def perform_create(self, serializer):
         data = serializer.validated_data
