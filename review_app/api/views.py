@@ -10,6 +10,7 @@ from rest_framework import status, serializers
 from review_app.models import Review
 from review_app.api.serializers import ReviewSerializer, ReviewUpdateSerializer
 from review_app.api.permissions import IsCustomerProfile, IsReviewer
+from review_app.api.throttling import ReviewThrottle
 
 
 class ReviewListCreateAPIView(ListCreateAPIView):
@@ -20,6 +21,7 @@ class ReviewListCreateAPIView(ListCreateAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated, IsCustomerProfile]
+    throttle_classes = [ReviewThrottle]
 
     def perform_create(self, serializer):
         data = serializer.validated_data
@@ -74,6 +76,7 @@ class ReviewDetailAPIView(RetrieveUpdateDestroyAPIView):
     """
     queryset = Review.objects.all()
     permission_classes = [IsAuthenticated, IsReviewer]
+    throttle_classes = [ReviewThrottle]
 
     def get_serializer_class(self):
         if self.request.method == 'PATCH':
