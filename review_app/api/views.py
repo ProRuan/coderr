@@ -5,6 +5,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, serializers
+from rest_framework import filters
 
 # 3. Local imports
 from review_app.models import Review
@@ -23,8 +24,10 @@ class ReviewListCreateAPIView(ListCreateAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated, IsCustomerProfile]
     throttle_classes = [ReviewThrottle]
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['business_user_id', 'reviewer_id']
+    ordering_fields = ['updated_at', 'rating']
+    ordering = ['-updated_at', '-rating']
 
     def perform_create(self, serializer):
         data = serializer.validated_data
