@@ -44,18 +44,18 @@ class OfferDetailTests(APITestCase):
             )
             self.details.append(detail)
 
-    # def test_get_offer_success(self):
-    #     self.client.force_authenticate(self.owner)
-    #     url = offer_detail_url(self.offer.pk)
-    #     response = self.client.get(url, format='json')
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     data = response.data
-    #     self.assertEqual(data['id'], self.offer.pk)
-    #     self.assertEqual(data['title'], 'Grafikdesign-Paket')
-    #     self.assertEqual(len(data['details']), 3)
-    #     # min_price and min_delivery_time
-    #     self.assertEqual(data['min_price'], 50)
-    #     self.assertEqual(data['min_delivery_time'], 5)
+    def test_get_offer_success(self):
+        self.client.force_authenticate(self.owner)
+        url = offer_detail_url(self.offer.pk)
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['id'], self.offer.pk)
+        self.assertEqual(data['title'], 'Grafikdesign-Paket')
+        self.assertEqual(len(data['details']), 3)
+        # min_price and min_delivery_time
+        self.assertEqual(data['min_price'], 50)
+        self.assertEqual(data['min_delivery_time'], 5)
 
     def test_get_offer_unauthenticated(self):
         url = offer_detail_url(self.offer.pk)

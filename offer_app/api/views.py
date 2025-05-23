@@ -79,7 +79,8 @@ class OfferDetailView(RetrieveUpdateDestroyAPIView):
     """GET, PATCH, DELETE for a specific Offer by ID."""
 
     queryset = Offer.objects.all()
-    serializer_class = OfferDetailSerializer
+    serializer_class = OfferListSerializer
+    # serializer_class = OfferDetailSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def get(self, request, *args, **kwargs) -> Response:
@@ -104,6 +105,8 @@ class OfferDetailView(RetrieveUpdateDestroyAPIView):
         )
         if serializer.is_valid():
             serializer.save()
+            # nested serializer (offerdetail)?!
+            # full_serializer = OfferListSerializer(offer)
             full_serializer = OfferDetailSerializer(offer)
             return Response(full_serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
