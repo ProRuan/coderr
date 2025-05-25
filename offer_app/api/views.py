@@ -11,7 +11,7 @@ from rest_framework import filters
 
 # 3. Local imports
 from offer_app.models import Offer, OfferDetail
-from .serializers import OfferListSerializer, OfferCreateSerializer, OfferDetailSerializer, OfferPatchSerializer
+from .serializers import OfferListSerializer, OfferCreateSerializer, OfferDetailSerializer, OfferPatchSerializer, OfferUpdateSerializer, OfferDetailNestedSerializer
 from .permissions import IsBusinessUser, IsOwnerOrReadOnly
 
 
@@ -76,51 +76,97 @@ class OfferListCreateAPIView(GenericAPIView):
 
 
 class OfferDetailView(RetrieveUpdateDestroyAPIView):
-    """GET, PATCH, DELETE for a specific Offer by ID."""
-
-    queryset = Offer.objects.all()
-    serializer_class = OfferListSerializer
-    # serializer_class = OfferDetailSerializer
+    """
+    GET   /api/offers/{id}/ → overview + detail URLs
+    PATCH /api/offers/{id}/ → update fields & nested details by offer_type
+    DELETE /api/offers/{id}/ → delete
+    """
+    queryset = Offer.objects.prefetch_related('details')
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
-    def get(self, request, *args, **kwargs) -> Response:
-        """Return the offer with all details."""
-        try:
-            offer = self.get_object()
-        except Offer.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(offer)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_serializer_class(self):
+        return OfferUpdateSerializer if self.request.method == 'PATCH' else OfferListSerializer
 
-    def patch(self, request, *args, **kwargs) -> Response:
-        """Update an offer partially with nested details."""
-        try:
-            offer = self.get_object()
-        except Offer.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    def get(self, request, *args, **kwargs):
+        offer = self.get_object()
+        return Response(OfferListSerializer(offer).data)
 
+    def patch(self, request, *args, **kwargs):
+        offer = self.get_object()
         self.check_object_permissions(request, offer)
-        serializer = OfferPatchSerializer(
+        serializer = OfferUpdateSerializer(
             offer, data=request.data, partial=True, context={'request': request}
         )
-        if serializer.is_valid():
-            serializer.save()
-            # nested serializer (offerdetail)?!
-            # full_serializer = OfferListSerializer(offer)
-            full_serializer = OfferDetailSerializer(offer)
-            return Response(full_serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-    def delete(self, request, *args, **kwargs) -> Response:
-        """Delete the offer if the user is the owner."""
-        try:
-            offer = self.get_object()
-        except Offer.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        # re-fetch from the DB so 'details' reflects updates
+        offer = Offer.objects.get(pk=offer.pk)
+        # # clear the prefetch cache so details.all() re-queries
+        # if hasattr(offer, '_prefetched_objects_cache'):
+        #     offer._prefetched_objects_cache.pop('details', None)
 
+        # return full nested details including 'id'
+        nested = OfferDetailNestedSerializer(offer.details.all(), many=True)
+        return Response({
+            'title': offer.title,
+            'image': offer.image.url if offer.image else None,
+            'description': offer.description,
+            'details': nested.data
+        }, status=status.HTTP_200_OK)
+
+    def delete(self, request, *args, **kwargs):
+        offer = self.get_object()
         self.check_object_permissions(request, offer)
         offer.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# class OfferDetailView(RetrieveUpdateDestroyAPIView):
+#     """
+#     GET   /api/offers/{id}/ → overview + detail URLs
+#     PATCH /api/offers/{id}/ → update offer + nested details
+#     DELETE /api/offers/{id}/ → delete
+#     """
+#     queryset = Offer.objects.prefetch_related('details')
+#     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
+#     def get_serializer_class(self):
+#         if self.request.method == 'PATCH':
+#             return OfferUpdateSerializer
+#         return OfferListSerializer
+
+#     def get(self, request, *args, **kwargs):
+#         offer = self.get_object()
+#         return Response(self.get_serializer(offer).data)
+
+#     def patch(self, request, *args, **kwargs):
+#         offer = self.get_object()
+#         self.check_object_permissions(request, offer)
+#         serializer = OfferUpdateSerializer(
+#             offer, data=request.data, partial=True, context={'request': request}
+#         )
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         # Reload and return full nested details
+#         offer.refresh_from_db()
+#         nested = OfferDetailNestedSerializer(
+#             offer.details.all(), many=True)  # nested serializer?!
+#         return Response(
+#             {
+#                 'title': offer.title,
+#                 'image': offer.image.url if offer.image else None,
+#                 'description': offer.description,
+#                 'details': nested.data
+#             },
+#             status=status.HTTP_200_OK
+#         )
+
+#     def delete(self, request, *args, **kwargs):
+#         offer = self.get_object()
+#         self.check_object_permissions(request, offer)
+#         offer.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class OfferDetailRetrieveAPIView(RetrieveAPIView):

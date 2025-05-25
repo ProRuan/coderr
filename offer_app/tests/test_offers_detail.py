@@ -68,35 +68,35 @@ class OfferDetailTests(APITestCase):
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    # def test_patch_offer_success(self):
-    #     self.client.force_authenticate(self.owner)
-    #     url = offer_detail_url(self.offer.pk)
-    #     payload = {
-    #         'title': 'Updated Grafikdesign-Paket',
-    #         'details': [
-    #             {
-    #                 'id': self.details[0].id,
-    #                 'title': 'Basic Design Updated',
-    #                 'revisions': 3,
-    #                 'delivery_time_in_days': 6,
-    #                 'price': 120,
-    #                 'features': ['Logo Design', 'Flyer'],
-    #                 'offer_type': 'basic'
-    #             }
-    #         ]
-    #     }
-    #     response = self.client.patch(url, payload, format='json')
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     data = response.data
-    #     self.assertEqual(data['title'], 'Updated Grafikdesign-Paket')
-    #     # Ensure nested detail updated
-    #     updated = next(d for d in data['details']
-    #                    if d['id'] == self.details[0].id)
-    #     self.assertEqual(updated['title'], 'Basic Design Updated')
-    #     # Unchanged detail remains
-    #     other = next(d for d in data['details']
-    #                  if d['id'] == self.details[1].id)
-    #     self.assertEqual(other['title'], 'Standard Design')
+    def test_patch_offer_success(self):
+        self.client.force_authenticate(self.owner)
+        url = offer_detail_url(self.offer.pk)
+        payload = {
+            'title': 'Updated Grafikdesign-Paket',
+            'details': [
+                {
+                    'id': self.details[0].id,
+                    'title': 'Basic Design Updated',
+                    'revisions': 3,
+                    'delivery_time_in_days': 6,
+                    'price': 120,
+                    'features': ['Logo Design', 'Flyer'],
+                    'offer_type': 'basic'
+                }
+            ]
+        }
+        response = self.client.patch(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['title'], 'Updated Grafikdesign-Paket')
+        # Ensure nested detail updated
+        updated = next(d for d in data['details']
+                       if d['id'] == self.details[0].id)
+        self.assertEqual(updated['title'], 'Basic Design Updated')
+        # Unchanged detail remains
+        other = next(d for d in data['details']
+                     if d['id'] == self.details[1].id)
+        self.assertEqual(other['title'], 'Standard Design')
 
     def test_patch_offer_unauthenticated(self):
         url = offer_detail_url(self.offer.pk)

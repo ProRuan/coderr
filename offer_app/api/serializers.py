@@ -8,14 +8,89 @@ from offer_app.models import Offer, OfferDetail
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):
-    """Serializer for creating/updating offer details."""
+    """
+    Serializer for both reading & (nested) updating an OfferDetail.
+    Uses 'offer_type' as the unique key.
+    """
     class Meta:
         model = OfferDetail
         fields = [
             'id', 'title', 'revisions', 'delivery_time_in_days',
             'price', 'features', 'offer_type'
         ]
-        read_only_fields = ['id']
+
+
+class OfferDetailNestedSerializer(serializers.ModelSerializer):
+    """
+    Full nested representation for an OfferDetail,
+    including 'id' so responses show which record.
+    """
+    class Meta:
+        model = OfferDetail
+        fields = [
+            'id', 'title', 'revisions', 'delivery_time_in_days',
+            'price', 'features', 'offer_type'
+        ]
+        read_only_fields = fields
+
+
+class OfferUpdateSerializer(serializers.ModelSerializer):
+    """
+    Updates top-level Offer fields and nested details by offer_type.
+    """
+    details = OfferDetailSerializer(many=True, required=False)
+
+    class Meta:
+        model = Offer
+        fields = ['title', 'image', 'description', 'details']
+
+    def update(self, instance, validated_data):
+        # 1) Update Offer fields
+        for attr, val in validated_data.items():
+            if attr != 'details':
+                setattr(instance, attr, val)
+        instance.save()
+
+        # 2) Update nested details by offer_type
+        for detail_data in validated_data.get('details', []):
+            od = instance.details.get(
+                # remove id=49 (just for multi-objects)!!!
+                offer_type=detail_data['offer_type'])
+            for key, value in detail_data.items():
+                setattr(od, key, value)
+            od.save()
+
+        return instance
+
+
+# class OfferDetailNestedSerializer(serializers.ModelSerializer):
+#     """
+#     Full nested representation for each OfferDetail.
+#     Used to return updated detail objects with all fields.
+#     """
+#     id = serializers.IntegerField(required=False)
+
+#     class Meta:
+#         model = OfferDetail
+#         fields = [
+#             'id',
+#             'title',
+#             'revisions',
+#             'delivery_time_in_days',
+#             'price',
+#             'features',
+#             'offer_type',
+#         ]
+#         read_only_fields = fields  # make all fields read-only when nested
+
+
+# class OfferDetailSerializer(serializers.ModelSerializer):
+#     id = serializers.IntegerField(required=False)
+
+#     class Meta:
+#         model = OfferDetail
+#         fields = ['id', 'title', 'revisions',
+#                   'delivery_time_in_days', 'price', 'features', 'offer_type']
 
 
 class OfferListSerializer(serializers.ModelSerializer):
@@ -72,6 +147,71 @@ class OfferCreateSerializer(serializers.ModelSerializer):
         for detail in details_data:
             OfferDetail.objects.create(offer=offer, **detail)
         return offer
+
+
+# class OfferUpdateSerializer(serializers.ModelSerializer):
+#     details = OfferDetailSerializer(many=True, required=False)
+
+#     class Meta:
+#         model = Offer
+#         fields = ['title', 'image', 'description', 'details']
+
+#     def update(self, instance, validated_data):
+#         details_data = validated_data.pop('details', None)
+#         print(f"instance: {instance.id}")
+#         test_od = OfferDetail.objects.filter(
+#             offer=instance.id, offer_type='basic').get(id=49)
+#         print(f"test_od: {test_od}")
+#         # test_od_id = test_od.get(id=49)
+#         # print(f"test_od_id: {test_od_id}")
+
+#         # Update Pokémon fields
+#         for attr, value in validated_data.items():
+#             setattr(instance, attr, value)
+#         instance.save()
+
+#         if details_data is not None:
+#             existing_details = {
+#                 detail.id: detail for detail in instance.details.all()}
+#             for detail_data in details_data:
+#                 detail_id = detail_data.get('id')
+#                 if detail_id and detail_id in existing_details:
+#                     detail = existing_details[detail_id]
+#                     for attr, value in detail_data.items():
+#                         if attr != 'id':
+#                             setattr(detail, attr, value)
+#                     detail.save()
+#                 else:
+#                     OfferDetail.objects.create(offer=instance, **detail_data)
+
+#         return instance
+
+#         # details_data = validated_data.pop('details', None)
+
+#         # # Update offer fields
+#         # for attr, val in validated_data.items():
+#         #     setattr(instance, attr, val)
+#         # instance.save()
+
+#         # if details_data is not None:
+#         #     existing = {d.id: d for d in instance.details.all()}
+#         #     for dd in details_data:
+#         #         did = dd.get('id')
+#         #         if did and did in existing:
+#         #             obj = existing[did]
+#         #             for k, v in dd.items():
+#         #                 if k != 'id':
+#         #                     setattr(obj, k, v)
+#         #             obj.save()
+#         #         else:
+#         #             OfferDetail.objects.create(offer=instance, **dd)
+#         #     # Ensure at least 3 details remain
+#         #     if instance.details.count() < 3:
+#         #         raise serializers.ValidationError(
+#         #             "An offer must have at least 3 details."
+#         #         )
+
+#         # return instance
 
 
 # # 1. Standard libraries
