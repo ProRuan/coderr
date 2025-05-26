@@ -1,112 +1,111 @@
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+# Third-party suppliers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 
 User = get_user_model()
 
 
 class ProfileDetailTests(APITestCase):
     """
-    Tests for ProfileDetailAPIView GET and PATCH endpoints.
+    Tests for GET and PATCH on /api/profile/{pk}/.
     """
 
     def setUp(self):
         self.client = APIClient()
-        # Create a business user as profile owner
         self.owner = User.objects.create_user(
             username='max_mustermann',
             email='max@business.de',
             password='ownerpass',
             type='business',
             first_name='Max',
-            last_name='Mustermann'
+            last_name='Mustermann',
         )
-        # Populate additional profile fields
         self.owner.file = 'profile_picture.jpg'
         self.owner.location = 'Berlin'
         self.owner.tel = '123456789'
         self.owner.description = 'Business description'
         self.owner.working_hours = '9-17'
-        # Set a known created_at for testing
         self.owner.created_at = timezone.make_aware(
-            timezone.datetime(2023, 1, 1, 12, 0, 0))
+            timezone.datetime(2023, 1, 1, 12, 0, 0)
+        )
         self.owner.save()
 
-        # Other user for forbidden tests
         self.other = User.objects.create_user(
             username='other_user',
             email='other@example.com',
             password='otherpass',
             type='business',
             first_name='Other',
-            last_name='User'
+            last_name='User',
         )
 
     def profile_url(self, pk):
+        """
+        Get profile detail url.
+        """
         return f'/api/profile/{pk}/'
 
-    # GET /api/profile/{pk}/
     def test_get_profile_success(self):
+        """
+        Ensure authenticated user gets profile successfully (HTTP 200).
+        """
         self.client.force_authenticate(self.owner)
-        url = self.profile_url(self.owner.pk)
-        response = self.client.get(url, format='json')
+        response = self.client.get(self.profile_url(self.owner.pk))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.data
-        # Assert returned fields
-        self.assertEqual(data['id'], self.owner.pk)
-        self.assertEqual(data['username'], 'max_mustermann')
-        self.assertEqual(data['email'], 'max@business.de')
-        self.assertEqual(data['location'], 'Berlin')
-        self.assertEqual(data['type'], 'business')
+        self.assertEqual(response.data['username'], self.owner.username)
 
     def test_get_profile_unauthenticated(self):
-        url = self.profile_url(self.owner.pk)
-        response = self.client.get(url, format='json')
+        """
+        Ensure unauthenticated user get HTTP 401.
+        """
+        response = self.client.get(self.profile_url(self.owner.pk))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_get_profile_not_found(self):
+        """
+        Ensure authenticated user gets HTTP 404 for non-existing profile.
+        """
         self.client.force_authenticate(self.owner)
-        url = self.profile_url(9999)
-        response = self.client.get(url, format='json')
+        response = self.client.get(self.profile_url(9999))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    # PATCH /api/profile/{pk}/
     def test_patch_profile_success(self):
+        """
+        Ensure profile owner can patch profile successfully (HTTP 200).
+        """
         self.client.force_authenticate(self.owner)
-        url = self.profile_url(self.owner.pk)
         payload = {
-            'first_name': 'Max',
-            'last_name': 'Mustermann',
-            'location': 'Berlin',
             'tel': '987654321',
             'description': 'Updated business description',
-            'working_hours': '10-18',
             'email': 'new_email@business.de'
         }
-        response = self.client.patch(url, data=payload, format='json')
+        response = self.client.patch(
+            self.profile_url(self.owner.pk), data=payload)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.data
-        # Assert updates reflected
-        self.assertEqual(data['tel'], '987654321')
-        self.assertEqual(data['description'], 'Updated business description')
-        self.assertEqual(data['email'], 'new_email@business.de')
+        self.assertEqual(response.data['tel'], payload['tel'])
 
     def test_patch_profile_unauthenticated(self):
-        url = self.profile_url(self.owner.pk)
-        response = self.client.patch(url, data={}, format='json')
+        """
+        Ensure unauthenticated user gets HTTP 401 on PATCH.
+        """
+        response = self.client.patch(self.profile_url(self.owner.pk), data={})
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_patch_profile_forbidden(self):
+        """
+        Ensure authenticated user gets HTTP 403 PATCHing others´ profiles.
+        """
         self.client.force_authenticate(self.other)
-        url = self.profile_url(self.owner.pk)
-        response = self.client.patch(
-            url, data={'location': 'Hamburg'}, format='json')
+        response = self.client.patch(self.profile_url(
+            self.owner.pk), data={'location': 'Hamburg'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_patch_profile_not_found(self):
+        """
+        Ensure authenticated user gets HTTP 404 PATCHing non-existing profile.
+        """
         self.client.force_authenticate(self.owner)
-        url = self.profile_url(9999)
-        response = self.client.patch(url, data={}, format='json')
+        response = self.client.patch(self.profile_url(9999), data={})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

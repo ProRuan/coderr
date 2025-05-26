@@ -51,7 +51,7 @@ class CustomUser(AbstractUser):
         auto_now_add=True,
         verbose_name='Created At'
     )
-    updated_at = models.DateTimeField(
+    uploaded_at = models.DateTimeField(
         auto_now=True,
         verbose_name='Updated At'
     )
@@ -62,4 +62,7 @@ class CustomUser(AbstractUser):
         verbose_name_plural = 'Users'
 
     def __str__(self):
+        """
+        Get a string representing a custom user.
+        """
         return self.username

@@ -1,128 +1,76 @@
-# 1. Standard libraries
-
-# 2. Third-party suppliers
+# Third-party suppliers
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-# 3. Local imports
-from auth_app.models import CustomUser
-# from profile_app.models import Profile
+User = get_user_model()
 
 
-class ProfileDetailSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source='user.email', read_only=True)
-    username = serializers.CharField(source='user.username', read_only=True)
-    type = serializers.CharField(source='user.type', read_only=True)
-
-    class Meta:
-        model = CustomUser
-        fields = [
-            'user', 'username', 'first_name', 'last_name', 'file',
-            'location', 'tel', 'description', 'working_hours',
-            'type', 'email', 'created_at'
-        ]
-
-
-class ProfileUpdateSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source='user.email', required=False)
+class BaseProfileSerializer(serializers.ModelSerializer):
+    """
+    Base serializer for user profiles.
+    """
+    user = serializers.IntegerField(source='id', read_only=True)
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
-            'first_name', 'last_name', 'location',
-            'tel', 'description', 'working_hours', 'email'
+            'user', 'username', 'first_name',
+            'last_name', 'file'
         ]
+        read_only_fields = ['user', 'username']
 
     def update(self, instance, validated_data):
-        user_data = validated_data.pop('user', {})
+        """
+        Update a user profile.
+        """
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        if 'email' in user_data:
-            instance.user.email = user_data['email']
-            instance.user.save()
         instance.save()
         return instance
 
 
-# class ProfileDetailSerializer(serializers.ModelSerializer):
-#     email = serializers.EmailField(source='user.email', read_only=True)
-
-#     class Meta:
-#         model = Profile
-#         fields = [
-#             'user', 'username', 'first_name', 'last_name', 'file',
-#             'location', 'tel', 'description', 'working_hours',
-#             'type', 'email', 'created_at'
-#         ]
-
-
-# class ProfileUpdateSerializer(serializers.ModelSerializer):
-#     email = serializers.EmailField(source='user.email', required=False)
-
-#     class Meta:
-#         model = Profile
-#         fields = [
-#             'first_name', 'last_name', 'location',
-#             'tel', 'description', 'working_hours', 'email'
-#         ]
-
-#     def update(self, instance, validated_data):
-#         user_data = validated_data.pop('user', {})
-#         for attr, value in validated_data.items():
-#             setattr(instance, attr, value)
-#         if 'email' in user_data:
-#             instance.user.email = user_data['email']
-#             instance.user.save()
-#         instance.save()
-#         return instance
-
-
-class BusinessProfileSerializer(serializers.ModelSerializer):
+class BusinessProfileListSerializer(BaseProfileSerializer):
     """
-    Serializer for business user profile data.
+    List serializer for business user profiles.
     """
-    class Meta:
-        model = CustomUser
-        fields = [
-            "id", "username", "first_name", "last_name", "file",
-            "location", "tel", "description", "working_hours", "type"
+    class Meta(BaseProfileSerializer.Meta):
+        fields = BaseProfileSerializer.Meta.fields + [
+            'location', 'tel', 'description',
+            'working_hours', 'type'
         ]
-        read_only_fields = ['id', 'username', 'file', 'type']
-
-
-class BusinessProfileDetailSerializer(BusinessProfileSerializer):
-    """
-    Serializer for business user profile data.
-    """
-    class Meta(BusinessProfileSerializer.Meta):
-        fields = BusinessProfileSerializer.Meta.fields + [
-            "email", "created_at"
-        ]
-        read_only_fields = BusinessProfileSerializer.Meta.read_only_fields + [
-            'created_at'
+        read_only_fields = BaseProfileSerializer.Meta.read_only_fields + [
+            'type'
         ]
 
 
-class CustomerProfileSerializer(serializers.ModelSerializer):
+class CustomerProfileListSerializer(BaseProfileSerializer):
     """
-    Serializer for customer user profile data.
+    List serializer for customer user profiles.
     """
-    class Meta:
-        model = CustomUser
-        fields = [
-            "id", "username", "first_name", "last_name",
-            "file", "uploaded_at", "type"
+    class Meta(BaseProfileSerializer.Meta):
+        fields = BaseProfileSerializer.Meta.fields + [
+            'uploaded_at', 'type'
         ]
-        read_only_fields = ['id', 'username', 'file', 'type']
+        read_only_fields = BaseProfileSerializer.Meta.read_only_fields + [
+            'type'
+        ]
 
 
-class CustomerProfileDetailSerializer(CustomerProfileSerializer):
+class BusinessProfileDetailSerializer(BusinessProfileListSerializer):
     """
-    Serializer for customer user profile data.
+    Serializer for retrieving/updating business user profiles.
     """
-    class Meta(CustomerProfileSerializer.Meta):
-        fields = CustomerProfileSerializer.Meta.fields + [
-            "created_at"
+    class Meta(BusinessProfileListSerializer.Meta):
+        fields = BusinessProfileListSerializer.Meta.fields + [
+            'email', 'created_at'
         ]
-        read_only_fields = CustomerProfileSerializer.Meta.read_only_fields + [
-            'created_at'
+
+
+class CustomerProfileDetailSerializer(CustomerProfileListSerializer):
+    """
+    Serializer for retrieving/updating customer user profiles.
+    """
+    class Meta(CustomerProfileListSerializer.Meta):
+        fields = CustomerProfileListSerializer.Meta.fields + [
+            'email', 'created_at'
         ]

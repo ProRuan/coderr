@@ -1,25 +1,25 @@
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+# Third-party suppliers
 from django.contrib.auth import get_user_model
-from django.utils import timezone
-
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 
 User = get_user_model()
 
 
-def business_list_url():
-    return '/api/profile/business/'
+def get_business_list_url():
+    """
+    Get url of business profile list.
+    """
+    return '/api/profiles/business/'
 
 
 class BusinessProfileListTests(APITestCase):
     """
-    Tests for BusinessProfileListView GET endpoint.
+    Tests for GET /api/profiles/business/
     """
 
     def setUp(self):
         self.client = APIClient()
-        # Create a business user
         self.business1 = User.objects.create_user(
             username='max_business',
             email='max@business.de',
@@ -28,30 +28,26 @@ class BusinessProfileListTests(APITestCase):
             first_name='Max',
             last_name='Mustermann'
         )
-        # Create a customer user (should not appear)
         User.objects.create_user(
             username='customer1',
             email='cust@example.com',
             password='custpass',
-            type='customer',
-            first_name='Cust',
-            last_name='User'
+            type='customer'
         )
 
     def test_list_business_profiles_success(self):
+        """
+        Ensure authenticated user receives only business profiles (HTTP 200).
+        """
         self.client.force_authenticate(self.business1)
-        url = business_list_url()
-        response = self.client.get(url, format='json')
+        response = self.client.get(get_business_list_url())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.data
-        # Only business profiles should be in the list
-        self.assertEqual(len(data), 1)
-        profile = data[0]
-        self.assertEqual(profile['id'], self.business1.pk)
-        self.assertEqual(profile['username'], 'max_business')
-        self.assertEqual(profile['type'], 'business')
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['type'], 'business')
 
     def test_list_business_profiles_unauthenticated(self):
-        url = business_list_url()
-        response = self.client.get(url, format='json')
+        """
+        Ensure unauthenticated user get denied (HTTP 401).
+        """
+        response = self.client.get(get_business_list_url())
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

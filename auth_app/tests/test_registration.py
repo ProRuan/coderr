@@ -45,7 +45,7 @@ class RegistrationTests(APITestCase):
 
     def test_registration_missing_fields(self):
         """
-        Missing payload should return HTTP 400 with errors.
+        Ensure missing payload returns HTTP 400.
         """
         response = self.client.post(self.url, data={}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -54,7 +54,7 @@ class RegistrationTests(APITestCase):
 
     def test_registration_password_mismatch(self):
         """
-        Mismatched passwords return HTTP 400.
+        Ensure mismatch passwords return HTTP 400.
         """
         payload = self.valid_payload.copy()
         payload['repeated_password'] = 'wrong'

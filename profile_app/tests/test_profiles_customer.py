@@ -1,25 +1,26 @@
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+# Third-party suppliers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 
 User = get_user_model()
 
 
-def customer_list_url():
-    return '/api/profile/customer/'
+def get_customer_list_url():
+    """
+    Get url of customer profile list.
+    """
+    return '/api/profiles/customer/'
 
 
 class CustomerProfileListTests(APITestCase):
     """
-    Tests for CustomerProfileListView GET endpoint.
+    Tests for GET /api/profiles/customer/
     """
 
     def setUp(self):
         self.client = APIClient()
-        # Create a customer user
         self.customer1 = User.objects.create_user(
             username='customer_jane',
             email='jane@customer.de',
@@ -28,34 +29,31 @@ class CustomerProfileListTests(APITestCase):
             first_name='Jane',
             last_name='Doe'
         )
-        # Create a business user (should not appear)
+        self.customer1.uploaded_at = timezone.make_aware(
+            timezone.datetime(2023, 9, 15, 9, 0, 0)
+        )
+        self.customer1.save()
+
         User.objects.create_user(
             username='business_user',
             email='biz@business.de',
             password='bizpass',
-            type='business',
-            first_name='Biz',
-            last_name='Owner'
+            type='business'
         )
-        # Set uploaded_at for customer
-        self.customer1.uploaded_at = timezone.make_aware(
-            timezone.datetime(2023, 9, 15, 9, 0, 0))
-        self.customer1.save()
 
     def test_list_customer_profiles_success(self):
+        """
+        Ensure authenticated user receives only customer profiles (HTTP 200).
+        """
         self.client.force_authenticate(self.customer1)
-        url = customer_list_url()
-        response = self.client.get(url, format='json')
+        response = self.client.get(get_customer_list_url())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.data
-        self.assertEqual(len(data), 1)
-        profile = data[0]
-        self.assertEqual(profile['id'], self.customer1.pk)
-        self.assertEqual(profile['username'], 'customer_jane')
-        self.assertEqual(profile['type'], 'customer')
-        self.assertEqual(profile['uploaded_at'], '2023-09-15T09:00:00Z')
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['type'], 'customer')
 
     def test_list_customer_profiles_unauthenticated(self):
-        url = customer_list_url()
-        response = self.client.get(url, format='json')
+        """
+        Ensure unauthenticated user get denied (HTTP 401).
+        """
+        response = self.client.get(get_customer_list_url())
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

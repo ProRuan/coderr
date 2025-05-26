@@ -26,7 +26,7 @@ class LoginTests(APITestCase):
 
     def test_login_success(self):
         """
-        Valid credentials return HTTP 200 and token.
+        Ensure valid credentials return HTTP 200 and token.
         """
         data = {
             'username': 'testuser',
@@ -41,7 +41,7 @@ class LoginTests(APITestCase):
 
     def test_login_invalid_credentials(self):
         """
-        Wrong password returns HTTP 400 with non_field_errors.
+        Ensure wrong password returns HTTP 400 with non_field_errors.
         """
         data = {
             'username': 'testuser',
