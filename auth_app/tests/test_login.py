@@ -1,33 +1,38 @@
-
+# Third-party suppliers
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APITestCase
+
+# Local imports
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from rest_framework.test import APITestCase
 
 User = get_user_model()
 
 
 class LoginTests(APITestCase):
+    """
+    Tests for user login endpoint.
+    """
+
     def setUp(self):
-        # Create a user for login tests
         self.user = User.objects.create(
             username='testuser',
             email='testuser@example.com',
             password=make_password('securePassword123'),
             type='customer'
         )
-        self.login_url = reverse('login')
+        self.url = reverse('login')
 
     def test_login_success(self):
         """
-        Test successful login returns 200 and auth token.
+        Valid credentials return HTTP 200 and token.
         """
         data = {
             'username': 'testuser',
             'password': 'securePassword123'
         }
-        response = self.client.post(self.login_url, data, format='json')
+        response = self.client.post(self.url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('token', response.data)
         self.assertEqual(response.data['username'], 'testuser')
@@ -36,12 +41,12 @@ class LoginTests(APITestCase):
 
     def test_login_invalid_credentials(self):
         """
-        Test login with wrong credentials returns 400.
+        Wrong password returns HTTP 400 with non_field_errors.
         """
         data = {
             'username': 'testuser',
-            'password': 'wrongPassword'
+            'password': 'wrong'
         }
-        response = self.client.post(self.login_url, data, format='json')
+        response = self.client.post(self.url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('non_field_errors', response.data)

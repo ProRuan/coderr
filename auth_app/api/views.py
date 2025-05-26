@@ -1,55 +1,57 @@
-# 1. Standard libraries
-
-# 2. Third-party suppliers
-from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView
-from rest_framework.response import Response
-from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+# Third-party suppliers
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from rest_framework.generics import CreateAPIView, GenericAPIView
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
-# 3. Local imports
+# Local imports
 from .serializers import LoginSerializer, RegistrationSerializer
 
 
 class RegistrationView(CreateAPIView):
     """
-    POST: Register a new user (customer or business).
+    POST /api/registration/
+    Registers a new user (customer or business) and returns an auth token.
     """
     serializer_class = RegistrationSerializer
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
+        """
+        Validate and save a new user, then generate a token.
+        """
         serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-
+        serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        token, _ = Token.objects.get_or_create(user=user)
-
+        token, provided = Token.objects.get_or_create(user=user)
         return Response({
-            "token": token.key,
-            "username": user.username,
-            "email": user.email,
-            "user_id": user.id
-        }, status=HTTP_201_CREATED)
+            'token':    token.key,
+            'username': user.username,
+            'email':    user.email,
+            'user_id':  user.id
+        }, status=status.HTTP_201_CREATED)
 
 
-class LoginView(APIView):
+class LoginView(GenericAPIView):
     """
-    Authenticates a user and returns an auth token with user info.
+    POST /api/login/
+    Authenticates user and returns an auth token.
     """
-    permission_classes = []
+    serializer_class = LoginSerializer
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            token, _ = Token.objects.get_or_create(user=user)
-            return Response({
-                "token": token.key,
-                "username": user.username,
-                "email": user.email,
-                "user_id": user.id,
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        """
+        Validate credentials and return token plus user info.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, provided = Token.objects.get_or_create(user=user)
+        return Response({
+            'token':    token.key,
+            'username': user.username,
+            'email':    user.email,
+            'user_id':  user.id
+        }, status=status.HTTP_200_OK)

@@ -1,9 +1,7 @@
-# 1. Standard libraries
-
-# 2. Third-party suppliers
+# Third-party suppliers
 from django.urls import path
 
-# 3. Local imports
+# Local imports
 from .views import LoginView, RegistrationView
 
 urlpatterns = [
