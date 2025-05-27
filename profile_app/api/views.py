@@ -20,8 +20,7 @@ User = get_user_model()
 
 class ProfileDetailAPIView(APIView):
     """
-    GET /api/profile/{pk}/ → retrieve profile
-    PATCH /api/profile/{pk}/ → update own profile
+    View for retreiving and updating profiles.
     """
     permission_classes = [IsAuthenticated, IsProfileOwner]
 
@@ -109,7 +108,7 @@ class BaseProfileListView(ListAPIView):
 
 class BusinessProfileListView(BaseProfileListView):
     """
-    GET /api/profiles/business/
+    View for listing business profiles.
     """
     user_type = 'business'
     serializer_class = BusinessProfileListSerializer
@@ -117,7 +116,7 @@ class BusinessProfileListView(BaseProfileListView):
 
 class CustomerProfileListView(BaseProfileListView):
     """
-    GET /api/profiles/customer/
+    View for listing customer profiles.
     """
     user_type = 'customer'
     serializer_class = CustomerProfileListSerializer

@@ -5,7 +5,7 @@ from django.db import models
 
 class CustomUser(AbstractUser):
     """
-    Extends AbstractUser to include profile-specific fields.
+    Represents a custom user including profile-specific fields.
     """
     USER_TYPES = (
         ('customer', 'Customer'),

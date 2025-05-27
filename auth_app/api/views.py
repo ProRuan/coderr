@@ -11,8 +11,7 @@ from .serializers import LoginSerializer, RegistrationSerializer
 
 class RegistrationView(CreateAPIView):
     """
-    POST /api/registration/
-    Registers a new user (customer or business) and returns an auth token.
+    View for registering a new user and returning an auth token.
     """
     serializer_class = RegistrationSerializer
     permission_classes = [AllowAny]
@@ -35,8 +34,7 @@ class RegistrationView(CreateAPIView):
 
 class LoginView(GenericAPIView):
     """
-    POST /api/login/
-    Authenticates user and returns an auth token.
+    View for authenticating a user and returning an auth token.
     """
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
