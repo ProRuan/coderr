@@ -1,37 +1,39 @@
-# order/tests/test_orders.py
-# 1. Standard libraries
-
-# 2. Third-party suppliers
+# Third-party suppliers
 from django.urls import reverse
-from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
-from django.utils import timezone
+from rest_framework.test import APIClient, APITestCase
 
-# 3. Local imports
+# Local imports
 from auth_app.models import CustomUser
 from offer_app.models import Offer, OfferDetail
 from order_app.models import Order
 
 
-def orders_url():
+def get_order_list_url():
+    """
+    Get URL of order list.
+    """
     return reverse('order-list-create')
 
 
 class OrderListCreateTests(APITestCase):
     """
-    Tests for GET and POST /api/orders/ endpoint.
+    Tests for listing and updating orders.
     """
 
     def setUp(self):
+        """
+        Set up sample users, offers and orders.
+        """
         self.client = APIClient()
-        # Create users
+
         self.customer = CustomUser.objects.create_user(
             username='cust', password='pass', type='customer'
         )
         self.business = CustomUser.objects.create_user(
             username='biz', password='pass', type='business'
         )
-        # Create an offer and an offer detail
+
         offer = Offer.objects.create(
             user=self.business,
             title='Logo Design',
@@ -46,7 +48,7 @@ class OrderListCreateTests(APITestCase):
             features=['Logo Design', 'Visitenkarten'],
             offer_type='basic'
         )
-        # Create an existing order
+
         self.order = Order.objects.create(
             customer_user=self.customer,
             business_user=self.business,
@@ -60,26 +62,31 @@ class OrderListCreateTests(APITestCase):
         )
 
     def test_get_orders_authenticated(self):
-        """GET returns orders related to authenticated user."""
+        """
+        Ensure retrieving orders related to authenticated user (HTTP 200).
+        """
         self.client.force_authenticate(self.customer)
-        res = self.client.get(orders_url(), format='json')
+        res = self.client.get(get_order_list_url(), format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         data = res.data
         self.assertIsInstance(data, list)
-        # customer sees their order
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['id'], self.order.id)
 
     def test_get_orders_unauthenticated(self):
-        """GET without auth returns 401."""
-        res = self.client.get(orders_url())
+        """
+        Ensure unauthenticated users cannot get order list (HTTP 401).
+        """
+        res = self.client.get(get_order_list_url())
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_post_order_success(self):
-        """Customer can create order from valid offer_detail_id."""
+        """
+        Ensure a customer can create order (HTTP 201).
+        """
         self.client.force_authenticate(self.customer)
         payload = {'offer_detail_id': self.detail.id}
-        res = self.client.post(orders_url(), payload, format='json')
+        res = self.client.post(get_order_list_url(), payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         data = res.data
         self.assertEqual(data['customer_user'], self.customer.id)
@@ -87,21 +94,27 @@ class OrderListCreateTests(APITestCase):
         self.assertEqual(data['title'], self.detail.title)
 
     def test_post_order_missing_offer_detail(self):
-        """Missing offer_detail_id returns 403."""
+        """
+        Ensure a request with missing offer detail gets HTTP 400.
+        """
         self.client.force_authenticate(self.customer)
-        res = self.client.post(orders_url(), {}, format='json')
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        res = self.client.post(get_order_list_url(), {}, format='json')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_post_order_non_customer(self):
-        """Business user cannot create order: returns 403."""
+        """
+        Ensure business users cannot create orders (HTTP 403).
+        """
         self.client.force_authenticate(self.business)
         payload = {'offer_detail_id': self.detail.id}
-        res = self.client.post(orders_url(), payload, format='json')
+        res = self.client.post(get_order_list_url(), payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_post_order_not_found(self):
-        """Invalid offer_detail_id returns 404."""
+        """
+        Ensure providing an invalid offer detail id gets HTTP 404.
+        """
         self.client.force_authenticate(self.customer)
         payload = {'offer_detail_id': 9999}
-        res = self.client.post(orders_url(), payload, format='json')
+        res = self.client.post(get_order_list_url(), payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)

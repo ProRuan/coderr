@@ -1,58 +1,32 @@
-# 1. Standard libraries
-
-# 2. Third-party suppliers
+# Third-party suppliers
 from rest_framework.permissions import BasePermission
-
-# 3. Local imports
 
 
 class IsBusinessUser(BasePermission):
     """
-    Allows PATCH only for users whose type == 'business'.
+    Allow updating an order for authenticated business users only.
     """
 
     def has_permission(self, request, view):
-        if request.method == 'PATCH':
-            u = request.user
-            return bool(u and u.is_authenticated and u.type == 'business')
-        return True
+        """
+        Check user type for being 'business'.
+        """
+        if request.method != 'PATCH':
+            return True
+        user = request.user
+        return bool(user and user.is_authenticated and user.type == 'business')
 
 
 class IsAdminDelete(BasePermission):
     """
-    Allows DELETE only for admin (staff) users.
+    Allow deleting an order for admin users (staff) only.
     """
 
     def has_permission(self, request, view):
-        if request.method == 'DELETE':
-            return bool(request.user and request.user.is_staff)
-        return True
-
-
-# # 1. Standard libraries
-
-# # 2. Third-party suppliers
-# from rest_framework.permissions import BasePermission, IsAdminUser, SAFE_METHODS
-
-# # 3. Local imports
-
-
-# class IsBusinessUser(BasePermission):
-#     """Allows access only to business-type users."""
-
-#     def has_permission(self, request, view):
-#         return (
-#             request.user and
-#             request.user.is_authenticated and
-#             hasattr(request.user, 'type') and
-#             request.user.type == 'business'
-#         )
-
-
-# class IsStaffOrReadOnly(BasePermission):
-#     """Allows DELETE only for staff."""
-
-#     def has_permission(self, request, view):
-#         if request.method == 'DELETE':
-#             return bool(request.user and request.user.is_staff)
-#         return True
+        """
+        Check user for being admin (staff).
+        """
+        if request.method != 'DELETE':
+            return True
+        user = request.user
+        return bool(user and user.is_staff)

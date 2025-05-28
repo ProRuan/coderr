@@ -1,29 +1,32 @@
-# order/tests/test_orders_detail.py
-# 1. Standard libraries
-
-# 2. Third-party suppliers
+# Third-party suppliers
 from django.urls import reverse
-from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 
-# 3. Local imports
+# Local imports
 from auth_app.models import CustomUser
 from offer_app.models import Offer, OfferDetail
 from order_app.models import Order
 
 
-def detail_url(pk):
+def get_order_detail_url(pk):
+    """
+    Get URL of order detail.
+    """
     return reverse('order-detail', args=[pk])
 
 
 class OrderDetailTests(APITestCase):
     """
-    Tests for GET, PATCH, and DELETE on /api/orders/{id}/
+    Tests for retrieving, updating and deleting orders.
     """
 
     def setUp(self):
+        """
+        Set up sample users, offers and orders.
+        """
         self.client = APIClient()
-        # Users
+
         self.customer = CustomUser.objects.create_user(
             username='cust', password='pass', type='customer'
         )
@@ -33,9 +36,12 @@ class OrderDetailTests(APITestCase):
         self.admin = CustomUser.objects.create_user(
             username='admin', password='pass', type='business', is_staff=True
         )
-        # Offer and detail
+
         offer = Offer.objects.create(
-            user=self.business, title='Logo Design', description='D')
+            user=self.business,
+            title='Logo Design',
+            description='D'
+        )
         self.detail = OfferDetail.objects.create(
             offer=offer,
             title='Logo Design',
@@ -45,7 +51,7 @@ class OrderDetailTests(APITestCase):
             features=['Logo Design', 'Visitenkarten'],
             offer_type='basic'
         )
-        # Create an order
+
         self.order = Order.objects.create(
             customer_user=self.customer,
             business_user=self.business,
@@ -59,82 +65,106 @@ class OrderDetailTests(APITestCase):
         )
 
     def test_get_order_success(self):
-        """Authenticated user can GET order detail."""
+        """
+        Ensure authenticated user can retrieve order (HTTP 200).
+        """
         self.client.force_authenticate(self.customer)
-        res = self.client.get(detail_url(self.order.id))
+        res = self.client.get(get_order_detail_url(self.order.id))
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         data = res.data
         self.assertEqual(data['id'], self.order.id)
         self.assertEqual(data['status'], 'in_progress')
 
     def test_get_order_unauthenticated(self):
-        """Unauthenticated GET returns 401."""
-        res = self.client.get(detail_url(self.order.id))
+        """
+        Ensure unauthenticated user cannot GET order (HTTP 401).
+        """
+        res = self.client.get(get_order_detail_url(self.order.id))
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_get_order_not_found(self):
-        """GET non-existent order returns 404."""
+        """
+        Ensure non-existend order returns HTTP 404.
+        """
         self.client.force_authenticate(self.customer)
-        res = self.client.get(detail_url(9999))
+        res = self.client.get(get_order_detail_url(9999))
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_patch_order_success(self):
-        """Business user can PATCH status."""
+        """
+        Ensure business user can update order status (HTTP 200).
+        """
         self.client.force_authenticate(self.business)
         payload = {'status': 'completed'}
-        res = self.client.patch(detail_url(
+        res = self.client.patch(get_order_detail_url(
             self.order.id), payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, 'completed')
 
     def test_patch_order_invalid_status(self):
-        """PATCH invalid status returns 400."""
+        """
+        Ensure updating order with invalid status gets HTTP 404.
+        """
         self.client.force_authenticate(self.business)
-        res = self.client.patch(detail_url(self.order.id), {
+        res = self.client.patch(get_order_detail_url(self.order.id), {
                                 'status': 'invalid'}, format='json')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_patch_order_unauthenticated(self):
-        """Unauthenticated PATCH returns 401."""
-        res = self.client.patch(detail_url(self.order.id), {
+        """
+        Ensure unauthenticated user cannot update order (HTTP 401).
+        """
+        res = self.client.patch(get_order_detail_url(self.order.id), {
                                 'status': 'completed'}, format='json')
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_patch_order_forbidden(self):
-        """Customer user cannot PATCH: returns 403."""
+        """
+        Ensure customer cannot update order status (HTTP 403).
+        """
         self.client.force_authenticate(self.customer)
-        res = self.client.patch(detail_url(self.order.id), {
+        res = self.client.patch(get_order_detail_url(self.order.id), {
                                 'status': 'completed'}, format='json')
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_patch_order_not_found(self):
-        """PATCH non-existent order returns 404."""
+        """
+        Ensure updating non-existent order returns HTTP 404.
+        """
         self.client.force_authenticate(self.business)
-        res = self.client.patch(detail_url(
+        res = self.client.patch(get_order_detail_url(
             9999), {'status': 'completed'}, format='json')
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_order_success(self):
-        """Admin user can DELETE order."""
+        """
+        Ensure admin user can delete order (HTTP 204).
+        """
         self.client.force_authenticate(self.admin)
-        res = self.client.delete(detail_url(self.order.id))
+        res = self.client.delete(get_order_detail_url(self.order.id))
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Order.objects.filter(id=self.order.id).exists())
 
     def test_delete_order_unauthenticated(self):
-        """Unauthenticated DELETE returns 401."""
-        res = self.client.delete(detail_url(self.order.id))
+        """
+        Ensure unauthenticated user cannot delete order (HTTP 401).
+        """
+        res = self.client.delete(get_order_detail_url(self.order.id))
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_delete_order_forbidden(self):
-        """Non-admin DELETE returns 403."""
+        """
+        Ensure non-admin cannot delete order (HTTP 403).
+        """
         self.client.force_authenticate(self.business)
-        res = self.client.delete(detail_url(self.order.id))
+        res = self.client.delete(get_order_detail_url(self.order.id))
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_delete_order_not_found(self):
-        """DELETE non-existent order returns 404."""
+        """
+        Ensure deleting non-existent order returns HTTP 404.
+        """
         self.client.force_authenticate(self.admin)
-        res = self.client.delete(detail_url(9999))
+        res = self.client.delete(get_order_detail_url(9999))
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
