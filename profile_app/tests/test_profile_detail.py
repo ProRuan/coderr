@@ -13,6 +13,9 @@ class ProfileDetailTests(APITestCase):
     """
 
     def setUp(self):
+        """
+        Set up users and sample profiles.
+        """
         self.client = APIClient()
         self.owner = User.objects.create_user(
             username='max_mustermann',

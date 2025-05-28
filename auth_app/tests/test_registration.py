@@ -15,6 +15,9 @@ class RegistrationTests(APITestCase):
     """
 
     def setUp(self):
+        """
+        Set up user for registration.
+        """
         self.client = APIClient()
         self.url = reverse('registration')
         self.valid_payload = {

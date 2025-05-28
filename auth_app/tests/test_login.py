@@ -16,6 +16,9 @@ class LoginTests(APITestCase):
     """
 
     def setUp(self):
+        """
+        Set up user for login.
+        """
         self.user = User.objects.create(
             username='testuser',
             email='testuser@example.com',

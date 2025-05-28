@@ -20,6 +20,9 @@ class CustomerProfileListTests(APITestCase):
     """
 
     def setUp(self):
+        """
+        Set up users and sample profiles.
+        """
         self.client = APIClient()
         self.customer1 = User.objects.create_user(
             username='customer_jane',

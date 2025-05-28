@@ -19,6 +19,9 @@ class BusinessProfileListTests(APITestCase):
     """
 
     def setUp(self):
+        """
+        Set up users and sample profiles.
+        """
         self.client = APIClient()
         self.business1 = User.objects.create_user(
             username='max_business',

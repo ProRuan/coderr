@@ -1,4 +1,5 @@
 # Third-party suppliers
+from django.db.models import Max, Min
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status
 from rest_framework.generics import (
@@ -8,6 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 # Local imports
+from offer_app.api.filters import OfferFilter
 from offer_app.models import Offer, OfferDetail
 from .paginations import OfferPagination
 from .permissions import IsBusinessUser, IsOwnerOrReadOnly
@@ -27,10 +29,23 @@ class OfferListCreateAPIView(GenericAPIView):
     filter_backends = [
         DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter
     ]
-    filterset_fields = ['creator_id', 'min_price', 'max_delivery_time']
+    filterset_class = OfferFilter
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'min_price']
     ordering = ['-updated_at']
+
+    def get_queryset(self):
+        """
+        Get queryset including virtual fields.
+        """
+        return (
+            Offer.objects
+                 .annotate(
+                     min_price=Min('details__price'),
+                     max_delivery_time=Max('details__delivery_time_in_days'),
+                 )
+            .prefetch_related('details')
+        )
 
     def get_serializer_class(self):
         """
@@ -52,7 +67,8 @@ class OfferListCreateAPIView(GenericAPIView):
         """
         Get offer list.
         """
-        page = self.paginate_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
@@ -126,17 +142,3 @@ class OfferDetailRetrieveAPIView(RetrieveAPIView):
     queryset = OfferDetail.objects.all()
     serializer_class = OfferDetailNestedSerializer
     permission_classes = [IsAuthenticated]
-
-
-# from django_filters import rest_framework as filters
-
-# class OfferFilter(filters.FilterSet):
-#     min_price = filters.NumberFilter(field_name='details__price', lookup_expr='gte')
-#     max_delivery_time = filters.NumberFilter(field_name='details__delivery_time_in_days', lookup_expr='lte')
-
-#     class Meta:
-#         model = Offer
-#         fields = ['user', 'min_price', 'max_delivery_time']
-
-
-# filterset_class = OfferFilter

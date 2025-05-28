@@ -40,11 +40,11 @@ class OfferStatsMixin:
         qs = obj.details.order_by('price')
         return qs.first().price if qs.exists() else None
 
-    def get_min_delivery_time(self, obj):
+    def get_max_delivery_time(self, obj):
         """
-        Get offer minimum delivery time.
+        Get offer maximum delivery time.
         """
-        qs = obj.details.order_by('delivery_time_in_days')
+        qs = obj.details.order_by('-delivery_time_in_days')
         return qs.first().delivery_time_in_days if qs.exists() else None
 
 
@@ -54,7 +54,7 @@ class OfferListSerializer(OfferStatsMixin, serializers.ModelSerializer):
     """
     details = serializers.SerializerMethodField()
     min_price = serializers.SerializerMethodField()
-    min_delivery_time = serializers.SerializerMethodField()
+    max_delivery_time = serializers.SerializerMethodField()
     user_details = serializers.SerializerMethodField()
 
     class Meta:
@@ -62,7 +62,7 @@ class OfferListSerializer(OfferStatsMixin, serializers.ModelSerializer):
         fields = [
             'id', 'user', 'title', 'image',
             'description', 'created_at', 'updated_at', 'details',
-            'min_price', 'min_delivery_time', 'user_details'
+            'min_price', 'max_delivery_time', 'user_details'
         ]
 
     def get_user_details(self, obj):
@@ -126,14 +126,14 @@ class OfferDetailRetrieveSerializer(OfferStatsMixin, serializers.ModelSerializer
     user = serializers.IntegerField(source='id', read_only=True)
     details = serializers.SerializerMethodField()
     min_price = serializers.SerializerMethodField()
-    min_delivery_time = serializers.SerializerMethodField()
+    max_delivery_time = serializers.SerializerMethodField()
 
     class Meta:
         model = Offer
         fields = [
             'id', 'user', 'title', 'image',
             'description', 'created_at', 'updated_at', 'details',
-            'min_price', 'min_delivery_time'
+            'min_price', 'max_delivery_time'
         ]
 
 
