@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-@lq!h7@9bcxxliozokbmh^=m4z7xarw4sgde=+agah+ve%yr8@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
@@ -71,8 +71,6 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5500',
     'http://localhost:5500',
 ]
-
-ALLOWED_HOSTS = ['127.0.0.1']
 
 ROOT_URLCONF = 'core.urls'
 
@@ -146,8 +144,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# check this!!!
-# use the code block below!!!
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',

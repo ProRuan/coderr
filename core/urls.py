@@ -14,14 +14,17 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# Third-party suppliers
 from django.contrib import admin
 from django.urls import include, path
 
+# Local imports
 from offer_app.api.views import OfferDetailRetrieveAPIView
-from order_app.api.views import CompletedOrderCountAPIView, OpenOrderCountAPIView
-# from order_app.api.views import CompletedOrderCountView, OrderCountView
+from order_app.api.views import (
+    CompletedOrderCountAPIView, OpenOrderCountAPIView
+)
 
-# think about urls here!!!
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
@@ -41,16 +44,6 @@ urlpatterns = [
         CompletedOrderCountAPIView.as_view(),
         name='completed-order-count'
     ),
-    # path(
-    #     'api/order-count/<int:business_user_id>/',
-    #     OrderCountView.as_view(),
-    #     name='order-count'
-    # ),
-    # path(
-    #     'api/completed-order-count/<int:business_user_id>/',
-    #     CompletedOrderCountView.as_view(),
-    #     name='completed-order-count'
-    # ),
     path('api/reviews/', include('review_app.api.urls')),
     path('api/base-info/', include('base_info_app.api.urls')),
 ]
