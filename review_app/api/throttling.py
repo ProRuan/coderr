@@ -1,10 +1,17 @@
+# Local imports
 from rest_framework.throttling import UserRateThrottle
 
 
 class ReviewThrottle(UserRateThrottle):
+    """
+    Throttles request related to reviews.
+    """
     scope = 'review'
 
     def allow_request(self, request, view):
+        """
+        Allow (limited) request depending on the request method.
+        """
         if request.method == 'GET':
             return True
 
