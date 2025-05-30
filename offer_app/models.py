@@ -38,7 +38,7 @@ class OfferDetail(models.Model):
         Offer, on_delete=models.CASCADE, related_name="details"
     )
     title = models.CharField(max_length=100, blank=False, default='')
-    revisions = models.IntegerField(default=0)
+    revisions = models.IntegerField(default=-1)
     delivery_time_in_days = models.IntegerField(default=0)
     price = models.IntegerField(default=0)
     features = models.JSONField(default=list)
