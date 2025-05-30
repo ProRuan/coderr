@@ -41,7 +41,9 @@ class ReviewListCreateAPIView(ListCreateAPIView):
         reviewer = self.request.user
         rev = Review.objects.filter(business_user=business, reviewer=reviewer)
         if rev.exists():
-            raise serializers.ValidationError('You already created a review.')
+            raise serializers.ValidationError({
+                'reviewer': 'You already created a review.'
+            })
         serializer.save(reviewer=reviewer)
 
     def create(self, request, *args, **kwargs):

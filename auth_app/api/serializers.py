@@ -63,8 +63,8 @@ class LoginSerializer(serializers.Serializer):
             username=data['username'], password=data['password']
         )
         if not user:
-            raise serializers.ValidationError(
-                'Invalid username or password.'
-            )
+            raise serializers.ValidationError({
+                'user': 'Invalid username or password.'
+            })
         data['user'] = user
         return data

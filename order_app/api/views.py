@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from .permissions import IsAdminDelete, IsBusinessUser
 from .serializers import (
     CompletedOrderCountSerializer, OrderCountSerializer,
-    OrderSerializer
+    OrderCreateSerializer, OrderSerializer
 )
 from offer_app.models import OfferDetail
 from order_app.models import Order
@@ -50,18 +50,29 @@ class OrderListCreateAPIView(GenericAPIView):
         """
         Add new order.
         """
-        user = request.user
-        if user.type != 'customer':
+        if request.user.type != 'customer':
             return Response(status=status.HTTP_403_FORBIDDEN)
-        detail_id = request.data.get('offer_detail_id')
-        if not detail_id:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        try:
-            detail = OfferDetail.objects.select_related(
-                'offer').get(id=detail_id)
-        except OfferDetail.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        order = Order.objects.create(
+
+        serializer = OrderCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        detail = self.get_offer_detail(
+            serializer.validated_data['offer_detail_id'])
+        order = self.create_order_from_detail(request.user, detail)
+        return Response(self.get_serializer(order).data, status=status.HTTP_201_CREATED)
+
+    def get_offer_detail(self, detail_id):
+        """
+        Get offer detail by id.
+        """
+        return OfferDetail.objects.select_related('offer').get(id=detail_id)
+
+    def create_order_from_detail(self, user, detail):
+        """
+        Create an order related to an offer detail.
+        """
+        return Order.objects.create(
             customer_user=user,
             business_user=detail.offer.user,
             title=detail.title,
@@ -71,7 +82,6 @@ class OrderListCreateAPIView(GenericAPIView):
             features=detail.features,
             offer_type=detail.offer_type,
         )
-        return Response(self.get_serializer(order).data, status=status.HTTP_201_CREATED)
 
 
 class OrderDetailAPIView(RetrieveUpdateDestroyAPIView):

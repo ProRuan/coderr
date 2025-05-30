@@ -2,6 +2,7 @@
 from rest_framework import serializers
 
 # Local imports
+from offer_app.models import OfferDetail
 from order_app.models import Order
 
 
@@ -18,6 +19,23 @@ class OrderSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class OrderCreateSerializer(serializers.Serializer):
+    """
+    Serializer for creating orders with offer_detail_id validation.
+    """
+    offer_detail_id = serializers.IntegerField()
+
+    def validate_offer_detail_id(self, value):
+        """
+        Check for offer_detail_id being existent.
+        """
+        if not OfferDetail.objects.filter(id=value).exists():
+            raise serializers.ValidationError({
+                'offer_detail': 'OfferDetail with this ID does not exist.'
+            })
+        return value
 
 
 class OrderCountSerializer(serializers.Serializer):

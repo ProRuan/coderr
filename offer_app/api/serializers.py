@@ -9,6 +9,8 @@ class OfferDetailNestedSerializer(serializers.ModelSerializer):
     """
     Serializer for nested offer details.
     """
+    offer_type = serializers.CharField(required=True)
+
     class Meta:
         model = OfferDetail
         fields = [
@@ -40,11 +42,11 @@ class OfferStatsMixin:
         qs = obj.details.order_by('price')
         return qs.first().price if qs.exists() else None
 
-    def get_max_delivery_time(self, obj):
+    def get_min_delivery_time(self, obj):
         """
-        Get offer maximum delivery time.
+        Get offer minimum delivery time.
         """
-        qs = obj.details.order_by('-delivery_time_in_days')
+        qs = obj.details.order_by('delivery_time_in_days')
         return qs.first().delivery_time_in_days if qs.exists() else None
 
 
@@ -54,7 +56,7 @@ class OfferListSerializer(OfferStatsMixin, serializers.ModelSerializer):
     """
     details = serializers.SerializerMethodField()
     min_price = serializers.SerializerMethodField()
-    max_delivery_time = serializers.SerializerMethodField()
+    min_delivery_time = serializers.SerializerMethodField()
     user_details = serializers.SerializerMethodField()
 
     class Meta:
@@ -62,7 +64,7 @@ class OfferListSerializer(OfferStatsMixin, serializers.ModelSerializer):
         fields = [
             'id', 'user', 'title', 'image',
             'description', 'created_at', 'updated_at', 'details',
-            'min_price', 'max_delivery_time', 'user_details'
+            'min_price', 'min_delivery_time', 'user_details'
         ]
 
     def get_user_details(self, obj):
@@ -92,7 +94,9 @@ class OfferCreateSerializer(serializers.ModelSerializer):
         Validate offer details.
         """
         if len(value) != 3:
-            raise serializers.ValidationError("3 details required.")
+            raise serializers.ValidationError({
+                'details': '3 details required.'
+            })
         return value
 
     def create(self, validated_data):
@@ -126,14 +130,14 @@ class OfferDetailRetrieveSerializer(OfferStatsMixin, serializers.ModelSerializer
     user = serializers.IntegerField(source='id', read_only=True)
     details = serializers.SerializerMethodField()
     min_price = serializers.SerializerMethodField()
-    max_delivery_time = serializers.SerializerMethodField()
+    min_delivery_time = serializers.SerializerMethodField()
 
     class Meta:
         model = Offer
         fields = [
             'id', 'user', 'title', 'image',
             'description', 'created_at', 'updated_at', 'details',
-            'min_price', 'max_delivery_time'
+            'min_price', 'min_delivery_time'
         ]
 
 
@@ -151,16 +155,34 @@ class OfferDetailUpdateSerializer(serializers.ModelSerializer):
         """
         Update an offer.
         """
+        self.update_offer_fields(instance, validated_data)
+        self.update_offer_detail_fields(
+            instance, validated_data.get('details', []))
+        return instance
+
+    def update_offer_fields(self, instance, validated_data):
+        """
+        Update offer fields.
+        """
         for attr, val in validated_data.items():
             if attr != 'details':
                 setattr(instance, attr, val)
         instance.save()
 
-        for detail_data in validated_data.get('details', []):
-            offer_type = detail_data['offer_type']
-            detail = instance.details.get(offer_type=offer_type)
+    def update_offer_detail_fields(self, instance, details_data):
+        """
+        Update offer detail fields.
+        """
+        for detail_data in details_data:
+            offer_type = detail_data.get('offer_type')
+            if not offer_type:
+                raise serializers.ValidationError({
+                    'offer_type': 'offer_type is required.'
+                })
+            try:
+                detail = instance.details.get(offer_type=offer_type)
+            except OfferDetail.DoesNotExist:
+                raise serializers.ValidationError({'detail': 'Not found.'})
             for key, value in detail_data.items():
                 setattr(detail, key, value)
             detail.save()
-
-        return instance

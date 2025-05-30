@@ -25,6 +25,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         Validate rating being in range (1 til 5).
         """
         if not 1 <= value <= 5:
-            raise serializers.ValidationError(
-                "Rating must be between 1 and 5.")
+            raise serializers.ValidationError({
+                'rating': 'Rating must be between 1 and 5.'
+            })
         return value
